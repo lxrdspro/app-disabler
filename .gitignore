@@ -1,0 +1,35 @@
+# Build artifacts
+*.apk
+*.aar
+*.jks
+*.keystore
+build/
+.gradle/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+*.swp
+*.swo
+
+# Android Studio
+**/local.properties
+**/proguard-rules.pro
+
+# Gradle
+.gradle
+gradlew.bat
+
+# Generated files
+.class
+.dex
+gen/
+bin/
+
+# Signing
+keystore.properties
+*.keystore
+*.jks
