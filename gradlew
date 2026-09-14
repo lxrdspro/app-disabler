@@ -152,81 +152,48 @@ if [ "$cygwin" = "true" -o "$msys" = "true" ] ; then
     if [ -n "$CLASSPATH" ] ; then
         CLASSPATH=`cygpath --path --mixed "$CLASSPATH"`
     fi
-
-    if [ "$1" = "-?" -o "$1" = "-h" -o "$1" = "--help" ] ; then
-        echo "Usage: $0 [<option>...] [<task>...]"
-        echo ""
-        echo "Where <option> includes:"
-        echo "    -?: Show this help message."
-        echo "    -a, --project-cache-dir: Specify the project-specific cache directory. By default, this is the .gradle directory in the root of the source tree."
-        echo "    -b, --build-file: Specify the build file."
-        echo "    -c, --settings-file: Specify the settings file."
-        echo "    --configure-on-demand: Configure necessary projects in order to execute the requested tasks. This means that only the projects that are needed are configured, which can lead to faster builds for large multi-project builds."
-        echo "    --console: Specifies which type of console output to generate. Values are 'plain', 'auto' (default), 'rich' or 'verbose'. You can also use system property org.gradle.console with the same values."
-        echo "    --continue: Continues task execution after a task failure."
-        echo "    -D, --system-prop: Set a system property of the JVM, for example -Dmyprop=myvalue. You can also use it for gradle properties, for example -Dorg.gradle.jvmargs=-Xmx1024m."
-        echo "    -d, --debug: Log in debug mode (includes normal stacktrace)."
-        echo "    --daemon: Use the Gradle daemon to run the build. Starts the daemon if not running."
-        echo "    --foreground: Starts the Gradle daemon in the foreground."
-        echo "    -g, --gradle-user-home: Specifies the gradle user home directory. The default is a directory named .gradle in your user home directory."
-        echo "    -I, --init-script: Specify an initialization script."
-        echo "    -i, --info: Set log level to info."
-        echo "    --include-build: Include the specified build in the composite."
-        echo "    -m, --dry-run: Run the build with all task actions disabled."
-        echo "    --max-workers: Configure the number of workers Gradle is allowed to use."
-        echo "    --no-build-cache: Disables the build cache."
-        echo "    --no-configure-on-demand: Disables the use of configuration on demand."
-        echo "    --no-daemon: Do not use the Gradle daemon to run the build. Useful when using the CI server where it is preferable to execute builds in the processs."
-        echo "    --no-parallel: Disables parallel execution to build the project."
-        echo "    --no-scan: Disables the creation of build scans. For more information about build scans, please visit https://gradle.com/build-scans."
-        echo "    -o, --offline: Execute the build without accessing network resources."
-        echo "    -P, --project-prop: Set a project property of the root project, for example -Pmyprop=myvalue."
-        echo "    -p, --project-dir: Specifies the start directory for the gradle build. By default, this is the directory where the build is executed."
-        echo "    --parallel: Build projects in parallel. Gradle will attempt to determine the optimal number of executor threads to use."
-        echo "    --profile: Profile the build and write a HTML profile report to the build/reports/profile directory."
-        echo "    --progress: Set progress output type to determinate or indeterminate (default: determinate). Use this when the build output is redirected to a file and it's not possible to detect whether or not the build is running in an interactive environment."
-        echo "    -q, --quiet: Log errors only."
-        echo "    --scan: Creates a build scan."
-        echo "    -s, --stacktrace: Print out the stacktrace for all exceptions."
-        echo "    -S, --full-stacktrace: Print out the full (very verbose) stacktrace for all exceptions."
-        echo "    -t, --continuous: Enables continuous build. Gradle does not exit and will re-execute tasks when file inputs change."
-        echo "    -u, --no-search-upward: Do not search in parent folders for a settings.gradle file."
-        echo "    -v, --version: Print the version of Gradle you are using."
-        echo "    -w, --project-cache-dir: Specify the project-specific cache directory. By default, this is the .gradle directory in the root of the source tree."
-        echo "    -x, --exclude-task: Specify a task to be excluded from execution."
-        echo ""
-        exit 0
-    fi
-    if [ "$1" != "" ] ; then
-        shift
-    fi
-    set -- "$@" "-Dorg.gradle.appname=$APP_BASE_NAME"
-    # Escape application args
-    save () {
-        for i do printf %s\\n "$i" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/' \\\\/" ; done
-        echo " "
-    }
-    APP_ARGS=$(save "$@")
-    eval set -- $DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS "\"-Dorg.gradle.appname=$APP_BASE_NAME\"" -classpath "\"$CLASSPATH\"" org.gradle.wrapper.GradleWrapperMain "$APP_ARGS"
-else
-    # For Mingw / MSYS, use the bash builtin test instead of [ ... ]
-    if ! test -x "$JAVACMD" ; then
-        die "ERROR: JAVA_HOME is not defined correctly in your environment. Please make sure that JAVA_HOME contains a valid installation of a Java Development Kit."
-    fi
-
-    APP_ARGS=()
-    for i do
-        j=$((i+1))
-        eval "arg=\${$j}"
-        case $arg in
-            -*)  false;;
-            *)   i=$(expr $i + 1)
-                 APP_ARGS[${#APP_ARGS[@]}]="$arg"
-                 ;;
-        esac
-    done
-
-    exec "$JAVACMD" $DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "${APP_ARGS[@]}"
 fi
 
-exec "$JAVACMD" "${JVM_OPTS[@]}" -classpath "$CLASSPATH" org.gradle.wrapper.GradleWrapperMain "$@"
+# Collect all arguments for the java command, stacking in reverse order:
+#   * args from the command line
+#   * the main class name
+#   * -classpath
+#   * -D...appname settings
+#   * --module-path (only if needed)
+#   * DEFAULT_JVM_OPTS, JAVA_OPTS, and GRADLE_OPTS environment variables.
+
+# For Cygwin or MSYS, switch paths to Windows format before running java
+if expr "$CLASSPATH" : '\([^:].*\)' > /dev/null; then
+    CLASSPATH=`cygpath --path --mixed "$CLASSPATH"`
+fi
+
+# Now convert the arguments - kludge to limit ourselves to /bin/sh
+i=0
+for arg in "$@" ; do
+    i=`expr $i + 1`
+    eval "args$i=\$arg"
+done
+case $i in
+    (0) set -- ;;
+    (1) set -- "$args1" ;;
+    (2) set -- "$args1" "$args2" ;;
+    (3) set -- "$args1" "$args2" "$args3" ;;
+    (4) set -- "$args1" "$args2" "$args3" "$args4" ;;
+    (5) set -- "$args1" "$args2" "$args3" "$args4" "$args5" ;;
+    (6) set -- "$args1" "$args2" "$args3" "$args4" "$args5" "$args6" ;;
+    (7) set -- "$args1" "$args2" "$args3" "$args4" "$args5" "$args6" "$args7" ;;
+    (8) set -- "$args1" "$args2" "$args3" "$args4" "$args5" "$args6" "$args7" "$args8" ;;
+    (9) set -- "$args1" "$args2" "$args3" "$args4" "$args5" "$args6" "$args7" "$args8" "$args9" ;;
+esac
+
+# Escape application args
+save () {
+    for i do printf %s\\n "$i" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/' \\\\/" ; done
+    echo " "
+}
+APP_ARGS=`save "$@"`
+
+# Collect all arguments for the java command, following the shell quoting and substitution rules
+eval "set -- $DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS \"-Dorg.gradle.appname=$APP_BASE_NAME\" -classpath \"$CLASSPATH\" org.gradle.wrapper.GradleWrapperMain $APP_ARGS"
+
+exec "$JAVACMD" "$@"
